@@ -52,3 +52,15 @@ Todo se puede reproducir en local con `make test`, `make sanitize` y `make fuzz`
 - **La zona horaria de "minutos desde 2000"** se asume UTC. No está confirmado en el código decompilado.
 - Los campos marcados como `unk` se leen pero no se interpretan.
 - No se ha comprobado el mensaje del servidor (`messageOffset != 0`) con un fichero real.
+
+## Obtener un forecast.bin real con File-Maker
+
+`tools/unwrap_forecast.py` convierte la salida de [RiiConnect24 File-Maker](https://github.com/RiiConnect24/File-Maker)
+en un `forecast.bin` plano que lee este parser y la app. Quita los 320 bytes de relleno y firma, descomprime LZ10
+y quita la cabecera de transporte de 12 bytes. Lo probé con una simulación de `sign_file` sobre la muestra:
+el resultado es idéntico byte a byte. Falta comprobarlo con un fichero generado de verdad.
+
+```sh
+pip install nlzss
+python3 tools/unwrap_forecast.py ruta/a/forecast.bin forecast-real.bin
+```
