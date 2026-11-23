@@ -59,4 +59,6 @@ android {
 dependencies {
     // ComponentActivity provides registerForActivityResult (the file picker).
     implementation("androidx.activity:activity:1.9.2")
+    // WindowInsetsCompat for touch-safe padding around the system bars.
+    implementation("androidx.core:core:1.13.1")
 }

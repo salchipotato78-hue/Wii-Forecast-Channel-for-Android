@@ -2,8 +2,11 @@
 
 Port del Forecast Channel de Wii (decompilación `forecast-main`, versión USA/NTSC v7).
 
-Estado actual: **base de datos y primera app**. La app lee `forecast.bin` y `short.bin` y muestra
-el pronóstico. El canal todavía no se ejecuta: faltan el shim de GX, OS y NAND, y el WAD del canal.
+Estado actual: **parser, app táctil con icono propio**. La app lee `forecast.bin` y `short.bin` y muestra
+el pronóstico. El canal todavía no se ejecuta: faltan el shim de GX, OS, NAND, NWC24 y el WAD del canal.
+
+Icono: `android/app/src/main/res/` (generado a partir de la imagen del sol, con icono adaptativo en API 26+).
+Interfaz: solo táctil, botones de 56 dp, texto seleccionable con pulsación larga y márgenes respecto a las barras del sistema.
 
 ## Estructura
 
@@ -29,7 +32,7 @@ En local, si quieres: `cd forecast-data && make test`.
 
 ## Lo que no está hecho
 
-- Ejecutar el canal (GX, OS, NAND, NWC24 y entrada táctil). Ver `forecast-data/README.md` y el documento de análisis.
+- Ejecutar el canal (GX, OS, NAND, NWC24 y entrada táctil del canal; la táctil de la app sí está hecha). Ver `forecast-data/README.md` y el documento de análisis.
 - Comprobaciones por día del parser (`CheckDayForecast`, `CheckWeekForecast`).
 - Zona horaria de las fechas (se muestran como UTC, por verificar).
 - Probar con un `forecast.bin` real del servidor.
