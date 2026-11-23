@@ -1,0 +1,6 @@
+test_forecast_data
+test_asan
+fuzz_asan
+fuzz_asan
+*.o
+*.a

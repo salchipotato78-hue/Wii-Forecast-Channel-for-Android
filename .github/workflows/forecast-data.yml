@@ -1,0 +1,92 @@
+name: forecast-data
+
+on:
+  push:
+    paths:
+      - "forecast-data/**"
+      - ".github/workflows/forecast-data.yml"
+  pull_request:
+    paths:
+      - "forecast-data/**"
+      - ".github/workflows/forecast-data.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: forecast-data-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    working-directory: forecast-data
+
+jobs:
+  host:
+    name: host (${{ matrix.cxx }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        cxx: [g++, clang++]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install clang
+        if: matrix.cxx == 'clang++'
+        run: sudo apt-get update && sudo apt-get install -y clang
+
+      - name: Tests
+        run: make test CXX=${{ matrix.cxx }}
+
+      - name: Sanitizers (ASan + UBSan)
+        run: make sanitize CXX=${{ matrix.cxx }}
+
+      - name: Fuzzing (2000 mutations under sanitizers)
+        run: make fuzz CXX=${{ matrix.cxx }}
+
+  android-arm64:
+    name: android arm64-v8a (NDK r27c, API 29)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Android NDK
+        uses: nttld/setup-ndk@v1
+        id: ndk
+        with:
+          ndk-version: r27c
+          local-cache: true
+
+      - name: Locate NDK clang
+        run: |
+          echo "NDK path: ${{ steps.ndk.outputs.ndk-path }}"
+          ls "${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin" | grep aarch64-linux-android29-clang++
+
+      - name: Build library for arm64-v8a
+        run: |
+          BIN="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          "$BIN/aarch64-linux-android29-clang++" -std=c++17 -O2 -Wall -Wextra -Wpedantic \
+            -Iinclude -c src/forecast_data.cpp -o forecast_data.o
+          "$BIN/llvm-ar" rcs libforecast_data.a forecast_data.o
+          "$BIN/llvm-nm" --defined-only libforecast_data.a | grep -q "forecast.*ParseForecast"
+
+      - name: Build test binary for arm64 (static)
+        run: |
+          BIN="${{ steps.ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          python3 tests/make_sample.py tests/sample
+          "$BIN/aarch64-linux-android29-clang++" -std=c++17 -O2 -Wall -Wextra -Wpedantic -static \
+            -Iinclude -Itests src/forecast_data.cpp tests/test_forecast_data.cpp -o test_arm64
+
+      - name: Install QEMU user mode
+        run: sudo apt-get update && sudo apt-get install -y qemu-user
+
+      - name: Run arm64 tests under QEMU
+        run: qemu-aarch64 ./test_arm64 tests/sample
+
+      - name: Upload arm64 artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: forecast-data-arm64
+          path: |
+            forecast-data/libforecast_data.a
+            forecast-data/test_arm64
+          if-no-files-found: error

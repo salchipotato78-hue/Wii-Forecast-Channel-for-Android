@@ -1,0 +1,19 @@
+# Android / Gradle
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+*.apk
+*.aab
+
+# forecast-data build outputs
+forecast-data/test_forecast_data
+forecast-data/test_asan
+forecast-data/fuzz_asan
+forecast-data/*.o
+forecast-data/*.a
+
+# Editors and OS
+.DS_Store
+*.swp
